@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var prototyper = require('../')
+  , program = require('commander');
+
+// CLI
+
+program
+  .version(prototyper.version)
+  .parse(process.argv);
+
+// Host and port
+
+var host = '0.0.0.0'
+  , port = program.args.pop() || '8080'
+
+if (~port.indexOf(':')) {
+  port = port.split(':');
+  host = port[0];
+  port = port[1];
+}
+
+// Serve
+prototyper.serve(host, port);
