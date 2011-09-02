@@ -7,14 +7,15 @@
 var prototyper = require('../')
   , program = require('commander');
 
-// CLI
-
+/**
+ * Option parsing
+ */
 program
   .version(prototyper.version)
+  .option('-d, --dir [dir]', 'Serve the specified directory', process.cwd())
   .parse(process.argv);
 
 // Host and port
-
 var host = '0.0.0.0'
   , port = program.args.pop() || '8080'
 
@@ -24,5 +25,13 @@ if (~port.indexOf(':')) {
   port = port[1];
 }
 
-// Serve
-prototyper.serve(host, port);
+var options =
+  { host: host
+  , port: port
+  , dir: program.dir
+  };
+
+/**
+ * Start prototyper
+ */
+prototyper.serve(options);
