@@ -32,11 +32,6 @@ var options =
   };
 
 /**
- * Add node_modules of target path to require list
- */
-require.paths.unshift(program.dir + "/node_modules");
-
-/**
  * Start prototyper
  */
 prototyper.serve(options);

@@ -1,11 +1,11 @@
 {
-    "name": "prototyper"
+    "name": "pro"
   , "description": "Accelerated prototype development with web technologies"
-  , "version": "0.0.1"
+  , "version": "0.1.0"
   , "author": "Eirikur Nilsson <eirikur@nilsson.is>"
   , "keywords": ["prototype", "framework", "express", "instant"]
-  , "repository": "git://github.com/eirikurn/prototyper"
-  , "main": "index"
+  , "repository": "git://github.com/eirikurn/pro"
+  , "main": "lib/prototyper"
   , "bin": { "pro": "./bin/pro" }
   , "dependencies": {
       "coffee-script": "1.1.x"
