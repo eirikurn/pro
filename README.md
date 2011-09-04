@@ -12,15 +12,11 @@ Supported file types:
 
 - *.styl files are compiled by [Stylus](http://learnboost.github.com/stylus/)
   into *.css files.
-
 - *.less files are compiled by [LESS](http://lesscss.org/) into *.css files.
 Stylus
-
 - *.jade files are compiled by [jade](http://jade-lang.com/) into *.html files.
-
 - *.coffee files are compiled by [CoffeeScript](http://jashkenas.github.com/coffee-script/)
   into *.js files.
-
 - All other files are served as they are.
 
 To give an example, the following folder structure:
@@ -57,22 +53,22 @@ The easiest way to get started is to install prototyper globally
 with npm.
 
 ```bash
-npm install -g mongoose
+npm install -g pro
 ```
 
-This gives you access to the executable named `pro`.
+This gives you access to the executable `pro`.
 
 ## Usage
 
-You can navigate to any folder and run `pro` to start a static
-file server on port 8080.
+You can navigate to any folder and run `pro` to start the prototyping
+server on port 8080.
 
 ```bash
 pro
 ```
 
-From there you can navigate your browser to `http://localhost:8080/`
-to browse the contents of the folder.
+From there you can navigate to `http://localhost:8080/` and browse
+the contents of the folder where `pro` is running.
 
 Whenever the browser requests a file, prototyper checks if the source
 of the file can be found in another file and if it requires compilation.
