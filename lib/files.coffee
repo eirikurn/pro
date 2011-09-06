@@ -23,16 +23,17 @@ class exports.FileRegistry
   constructor: (@source, @target) ->
     @files = []
 
-  lookup: (path) ->
-    @files[path]
+  addFile: (path, stats) ->
+    ctr = getFileConstructor path
+    file = new ctr(path, stats)
+    files[path] = file
+    utils.log "debug", "Found #{file.constructor.name} at #{path}"
+    return file
 
   scan: (cb) ->
-    files = @files
+    self = this
     processFile = (path, stats, cb) ->
-      ctr = getFileConstructor path
-      file = new ctr(path, stats)
-      files[path] = file
-      utils.log "debug", "Found #{file.constructor.name} at #{path}"
+      self.addFile(path, stats)
       cb()
 
     utils.iterateFolder @source, proignore, processFile, =>
@@ -50,6 +51,14 @@ class exports.FileRegistry
         processFile(i+1)
 
     processFile(0)
+
+  lookupFile: (path, cb) ->
+    if @files[path]
+      return cb(null, @files[path])
+    else
+      fs.stat pathUtils.join(@source, path), (err, stats) ->
+        return cb(err) if err
+        cb(null, addFile(path, stats))
 
   buildOutdated: (cb) ->
     self = this
