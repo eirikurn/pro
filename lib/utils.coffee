@@ -7,13 +7,18 @@ pathUtils = require 'path'
 ##
 # Logging
 ##
-exports.log = (level, msg) ->
+exports.log = (level, msg...) ->
   level = logLevels.indexOf level
   if level < 0
-    msg = level
+    msg.push level
     level = 1
   if level >= currentLevel
-    console.log "[#{logLevels[level].toUpperCase()}] #{msg}"
+    console.log "[#{logLevels[level].toUpperCase()}]", msg...
+
+exports.logError = (error, msg) ->
+  console.log "[#{logLevels[3].toUpperCase()}]", msg or error.toString()
+  if msg then console.log error.toString()
+
 
 logLevels = ['debug', 'info', 'warn', 'error']
 currentLevel = 1

@@ -2,6 +2,7 @@
 # Module dependencies
 ##
 fs = require 'fs'
+{EventEmitter} = require 'events'
 pathUtils = require 'path'
 utils = require './utils'
 
@@ -25,15 +26,15 @@ class exports.FileRegistry
 
   addFile: (path, stats) ->
     ctr = getFileConstructor path
-    file = new ctr(path, stats)
-    files[path] = file
+    file = new ctr(path, stats, this)
+    @files[path] = file
     utils.log "debug", "Found #{file.constructor.name} at #{path}"
+    file.on 'change', => @buildFile file, ->
     return file
 
   scan: (cb) ->
-    self = this
-    processFile = (path, stats, cb) ->
-      self.addFile(path, stats)
+    processFile = (path, stats, cb) =>
+      @addFile(path, stats)
       cb()
 
     utils.iterateFolder @source, proignore, processFile, =>
@@ -41,13 +42,12 @@ class exports.FileRegistry
         @buildOutdated cb
 
   findDependencies: (cb) ->
-    self = this
     paths = Object.keys(@files)
-    processFile = (i) ->
+    processFile = (i) =>
       path = paths[i]
       return cb() unless path
 
-      self.files[path].findDependencies self, (err) ->
+      @files[path].findDependencies this, (err) ->
         processFile(i+1)
 
     processFile(0)
@@ -60,41 +60,25 @@ class exports.FileRegistry
         return cb(err) if err
         cb(null, addFile(path, stats))
 
+  buildFile: (file, cb) ->
+    file.build (err) ->
+      utils.logError(err, "Error building file #{file.path}") if err
+      cb(err)
+
   buildOutdated: (cb) ->
-    self = this
     paths = Object.keys(@files)
 
-    processFile = (i) ->
-      path = paths[i]
-      return cb() unless path
+    processFile = (i) =>
+      file = @files[paths[i]]
+      return cb() unless file
 
-      file = self.files[path]
-      targetPath = pathUtils.join self.target, path
-
-      if file.compiler.compilesTo
-        targetPath = targetPath.replace(extension, "." + file.compiler.compilesTo)
-
-      build = ->
-        file.build targetPath, (err) ->
-          utils.log "error", err if err
-          processFile(i+1)
-      skip = ->
+      next = (err) ->
+        utils.logError(err, "Error processing file #{paths[i]}") if err
         processFile(i+1)
 
-      fs.stat targetPath, (err, stats) ->
-        if err
-          if err.code == "ENOENT"
-            utils.log "debug", "Building non-existant #{path}"
-            build()
-          else
-            utils.log "warn", "Error accessing file #{targetPath}"
-            skip()
-        else if file.isNewerThan(stats.mtime)
-          utils.log "debug", "Building outdated #{path}"
-          build()
-        else
-          utils.log "debug", "Not building up-to-date #{path}"
-          skip()
+      file.isOutdated (err, outdated) =>
+        return next(err) if err
+        @buildFile(file, next) if outdated
 
     processFile(0)
 
@@ -104,49 +88,86 @@ getFileConstructor = (args...) ->
   compiler = Compilers[ext]
   return compiler?.fileStrategy or File
 
-class File
-  constructor: (@path, @stats) ->
+class File extends EventEmitter
+  constructor: (@path, @stats, registry) ->
     @dependsOn = []
     @dependedBy = []
     @extension = pathUtils.extname(@path)[1..]
     @compiler = Compilers[@extension] or Compilers.default
+    @targetPath = pathUtils.join registry.target, path
+    if @compiler.compilesTo
+      @targetPath = @targetPath.replace(extension, "." + @compiler.compilesTo)
+
+    fs.watchFile @path, (newStats, oldStats) => @onChange(newStats)
+
+  onChange: (newStats) ->
+    if newStats.mtime > @stats.mtime
+      @stats = newStats
+      @emit 'change'
+
+  onDependencyChange: =>
+    @emit 'change'
 
   findDependencies: (registry, cb) ->
     cb()
 
-  build: (target, cb) ->
-    utils.log "info", "Building #{@path}"
-    self = this
+  resetDependencies: ->
+    for f in @dependsOn
+      f.removeListener 'change', @onDependencyChange
+    @dependsOn.length = 0
 
-    fs.readFile self.path, "utf8", (err, str) ->
+  addDependency: (file) ->
+    @dependsOn.push file
+    file.on 'change', @onDependencyChange
+
+  build: (cb) ->
+    utils.log "info", "Building #{@path}"
+
+    @read (err, str) =>
       return cb(err) if err
-      self.compile str, (err, str) ->
+      @compile str, {}, (err, str) =>
         return cb(err) if err
-        utils.safeWriteFile target, str, "utf8", (err) ->
+        utils.safeWriteFile @targetPath, str, "utf8", (err) ->
           cb(err)
 
-  compile: (str, cb) ->
+  compile: (str, options, cb) ->
     try
-      @compiler.compile str, {filename: @path}, cb
+      options.filename = @path
+      @compiler.compile str, options, cb
     catch err
       cb err
 
+  read: (cb) ->
+    fs.readFile @path, "utf8", cb
+
   isNewerThan: (time) ->
-    return true if @stats.mtime > time
+    return true if time > @stats.mtime
     for f in @dependsOn
       return true if f.isNewerThan time
     return false
 
+  isOutdated: (cb) ->
+    fs.stat @targetPath, (err, stats) =>
+      if err
+        if err.code == "ENOENT"
+          cb(null, true)
+        else
+          cb(err)
+      else if @isNewerThan(stats.mtime)
+        cb(null, false)
+      else
+        cb(null, true)
+
 class TemplateFile extends File
   findDependencies: (registry, cb) ->
-    @dependsOn = []
+    @resetDependencies()
     hasLayout = (dirname) =>
       dirname = '' if dirname == '.'
 
       layoutPath = pathUtils.join(dirname, "layout.#{@extension}")
       layoutFile = registry.files[layoutPath]
       if layoutFile
-        @dependsOn.push layoutFile
+        @addDependency layoutFile
         utils.log "debug", "Found layout for #{@path}"
         cb()
       else if dirname == ''
@@ -159,10 +180,31 @@ class TemplateFile extends File
     else
       hasLayout pathUtils.dirname @path
 
+  read: (cb) ->
+    if @lastRead > @stats.mtime
+      return cb(null, @lastFile)
+
+    super (err, str) =>
+      return cb(err) if err
+      @lastRead = Date()
+      @lastFile = str
+      cb null, @lastFile
+
+  compile: (str, options, cb) ->
+    options.layout or= {}
+    super str, options, (err, str) =>
+      return cb(err, str) if err or @dependsOn.length == 0
+
+      options.body = str
+      @dependsOn[0].read (err, str) =>
+        return cb(err) if err
+        @dependsOn[0].compile str, options, cb
+
 class LessFile extends File
-  compile: (str, cb) ->
+  compile: (str, options, cb) ->
     try
-      @compiler.compile str, {filename: @path}, (err, str) ->
+      options.filename = @path
+      @compiler.compile str, options, (err, str) ->
         utils.makeLessErrorSexy err
         cb err, str
     catch err
@@ -175,7 +217,7 @@ Compilers =
     fileStrategy: TemplateFile
     compile: (str, options, cb) ->
       @jade or= require "jade"
-      str = @jade.compile(str, options)()
+      str = @jade.compile(str, options)(options)
       cb(null, str)
 
   styl:
