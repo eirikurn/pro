@@ -19,6 +19,7 @@ var prototyper = require('../')
 program
   .version(prototyper.version)
   .option('-d, --dir [dir]', 'Directory containing the prototype sources', process.cwd())
+  .option('-l, --log [level]', 'Controls how verbose the logs will be, can be debug, info, warn and error', 'info')
   .option('-o, --output [dir]', 'Output directory for static web content', process.cwd() + "/_build")
   .parse(process.argv);
 
@@ -36,6 +37,7 @@ var options =
   { host: host
   , port: port
   , dir: program.dir
+  , logLevel: program.log
   , output: program.output
   };
 
