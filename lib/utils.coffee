@@ -26,7 +26,7 @@ exports.setLogLevel = (level) ->
   currentLevel = logLevels.indexOf level
   throw new Error("No log level named #{level}") if currentLevel == -1
 
-exports.createFolders = (path, cb) ->
+createFolders = exports.createFolders = (path, cb) ->
   parent = pathUtils.dirname path
   _create = -> fs.mkdir path, 0755, (err) ->
     err = null if err and err.code == "EEXIST"
@@ -59,17 +59,17 @@ iterateFolder = exports.iterateFolder = (folder, ignoreList, cb, after, prefix =
     return after(err) if err
 
     processFile = (i) ->
-      path = files[i]
-      return after(null, results) unless path
+      filename = files[i]
+      resultPath = pathUtils.join(prefix, filename)
+      path = pathUtils.join(folder, filename)
 
-      resultPath = pathUtils.join(prefix, path)
-      path = pathUtils.join(folder, path)
       next = (err, paths) ->
         if err then utils.log "debug", "Error iterating #{path}: #{err}"
         results.push.apply(results, paths) if paths
         processFile(i+1)
 
-      return next(null, []) if resultPath in ignoreList
+      return after(null, results) unless filename
+      return  next(null, [])      if filename[0] == "." or resultPath in ignoreList
 
       fs.stat path, (err, stats) ->
         if stats
@@ -87,25 +87,4 @@ iterateFolder = exports.iterateFolder = (folder, ignoreList, cb, after, prefix =
 # Let's emulate stylus errors to make the less errors a bit more useful.
 # Heavily dependent on less error quirks.
 ##
-exports.makeLessErrorSexy = (err) ->
-  if err and err.toString == Object::toString
-    err.toString = ->
-      error = []
-      nrSize = (@line + 1).toString().length
-      error.push (@type or @name) + ": " + @filename
-      error[0] += ":" + @line if @line
-      if @extract
-        error.push "  " + pad(@line-1, nrSize) + "| " + @extract[0] if @extract[0]
-        error.push "> " + pad(@line, nrSize)   + "| " + @extract[1] if @extract[1]
-        error.push "  " + pad(@line+1, nrSize) + "| " + @extract[2] if @extract[2]
-
-      error.push ""
-      error.push @message
-      error.push ""
-      error.push @stack
-      return error.join "\n"
-
-  pad = (integer, num) ->
-    str = integer.toString()
-    return Array(num-str.length).join(' ') + str
 
