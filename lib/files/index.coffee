@@ -7,21 +7,16 @@ pathUtils = require 'path'
 
 utils = require '../utils'
 
-# Regexp to find and replace file extensions
-extension = /\.(\w+)$/
-
-# Regexp to detect private files
-private = /(^|[/\\])_/g
-
 class File extends EventEmitter
   constructor: (@path, @stats, @compiler, registry) ->
     @dependsOn = []
-    @extension = pathUtils.extname(@path)[1..]
-    @private = private.test @path
-    @cleanPath = @path.replace private, "$1"
-    @targetPath = pathUtils.join registry.target, path
-    if @compiler.compilesTo
-      @targetPath = @targetPath.replace(extension, "." + @compiler.compilesTo)
+    @extension = utils.extname @path
+    @private = utils.isPrivate @path
+    @cleanPath = utils.cleanPath @path
+    unless @private
+      @targetPath = pathUtils.join registry.target, path
+      if @compiler.compilesTo
+        @targetPath = utils.newext @targetPath, @compiler.compilesTo
 
     fs.watchFile @path, (newStats, oldStats) => @onChange(newStats)
 
@@ -75,6 +70,8 @@ class File extends EventEmitter
     return false
 
   isOutdated: (cb) ->
+    cb(new Error("Private files can't be outdated")) if @private
+
     fs.stat @targetPath, (err, stats) =>
       if err
         if err.code == "ENOENT"

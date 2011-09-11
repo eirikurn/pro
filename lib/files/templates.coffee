@@ -8,24 +8,21 @@ class TemplateFile extends File
 
   findDependencies: (registry, cb) ->
     @resetDependencies()
-    hasLayout = (dirname) =>
+
+    tries = []; dirname = @cleanPath
+    while dirname != ''
+      dirname = pathUtils.dirname dirname
       dirname = '' if dirname == '.'
-
       layoutPath = pathUtils.join(dirname, "layout.#{@extension}")
-      layoutFile = registry.files[layoutPath]
-      if layoutFile
-        @addDependency layoutFile
-        utils.log "debug", "Found layout for #{@path}"
-        cb()
-      else if dirname == ''
-        cb()
-      else
-        hasLayout pathUtils.dirname dirname
+      tries.push layoutPath unless @cleanPath == layoutPath
 
-    if pathUtils.basename(@cleanPath) == "layout.#{@extension}"
+    lookupFile = registry.lookupFile.bind(registry)
+    utils.first tries, lookupFile, (err, layoutFile) =>
+      return cb(err) if err or not layoutFile
+
+      @addDependency layoutFile
+      utils.log "debug", "Found layout for #{@path}"
       cb()
-    else
-      hasLayout pathUtils.dirname(@path)
 
   read: (cb) ->
     if @lastRead > @stats.mtime

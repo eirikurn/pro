@@ -1,7 +1,8 @@
 # Dependencies
+fs        = require 'fs'
 pathUtils = require 'path'
-utils = require './utils'
-files = require './files'
+utils     = require './utils'
+files     = require './files'
 
 ##
 # File registry
@@ -10,68 +11,81 @@ class FileRegistry
 
   constructor: (@source, @target) ->
     @files = []
+    @filesBySource = {}
+    @filesByTarget = {}
 
   addFile: (path, stats) ->
     compiler = @getCompiler path
     file = new compiler.fileStrategy(path, stats, compiler, this)
-    @files[file.cleanPath] = file
+
+    @files.push(file)
+    @filesBySource[file.cleanPath] = file
+    @filesByTarget[file.targetPath] = file unless file.private
 
     utils.log "debug", "Found #{file.constructor.name} at #{path}"
 
     file.on 'change', =>
       file.build (err) ->
-        utils.logError(err, "Error building file #{file.path}") if err
+        utils.logError(err) if err
 
     return file
 
   scan: (cb) ->
-    processFile = (path, stats, cb) =>
+    addFile = (path, stats, cb) =>
       @addFile(path, stats)
       cb()
 
-    utils.iterateFolder @source, exports.ignore, processFile, =>
+    utils.iterateFolder @source, exports.ignore, addFile, =>
       @findDependencies =>
         @buildOutdated cb
 
   findDependencies: (cb) ->
-    paths = Object.keys(@files)
-    processFile = (i) =>
-      path = paths[i]
-      return cb() unless path
+    registry = this
+    findDependencies = (file, next) ->
+      file.findDependencies registry, next
 
-      @files[path].findDependencies this, (err) ->
-        processFile(i+1)
-
-    processFile(0)
+    utils.forEach @files, findDependencies, cb
 
   lookupFile: (path, cb) ->
-    if @files[path]
-      return cb(null, @files[path])
-    else
-      fs.stat pathUtils.join(@source, path), (err, stats) ->
+    cleanPath = utils.cleanPath path
+    if @filesBySource[cleanPath]
+      return cb(null, @filesBySource[cleanPath])
+
+    # NodeJS still doesn't have a good cross-platform watchDirectory api.
+    # So we check here if it has been added since the initial scan.
+    # If it does exist, we'll need to initialize and build it.
+    fs.stat pathUtils.join(@source, path), (err, stats) =>
+      return cb(err) if err
+      return cb() if stats.isDirectory()
+
+      file = @addFile(path, stats)
+      file.findDependencies this, (err) ->
         return cb(err) if err
-        cb(null, addFile(path, stats))
+
+        file.build cb
+
+  lookupTarget: (path, cb) ->
+    potentialSources = [path]
+    extension = utils.extname(path)
+
+    for sourceExt, compiler of exports.Compilers when compiler.compilesTo == extension
+      potentialSources.push utils.newext(path, sourceExt)
+
+    utils.first potentialSources, @lookupFile.bind(this), cb
 
   buildOutdated: (cb) ->
-    filesToCheck = (file for path, file of @files when not file.private)
+    action = (file, next) ->
+      return next() if file.private
 
-    processFile = (i) =>
-      file = filesToCheck[i]
-      return cb() unless file
-
-      next = (err) ->
-        utils.logError(err, "Error processing file #{file.path}") if err
-        processFile(i+1)
-
-      file.isOutdated (err, outdated) =>
+      file.isOutdated (err, outdated) ->
         if err or not outdated
           return next(err)
         file.build next
 
-    processFile(0)
+    utils.forEach @files, action.logErrors(), cb
 
   getCompiler: (path) ->
-    ext = pathUtils.extname(path)[1..]
+    ext = utils.extname(path)
     compiler = exports.Compilers[ext] or exports.Compilers.default
     return compiler
 
