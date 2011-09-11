@@ -7,7 +7,11 @@ utils        = require('./utils')
 FileRegistry = require('./fileregistry')
 Server       = require('./server')
 
-exports.serve = (options) ->
+# Package version
+exports.version = "0.2.0"
+
+# Main
+exports.start = (options) ->
   utils.setLogLevel(options.logLevel)
 
   registry = new FileRegistry(options.dir, options.output)

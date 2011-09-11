@@ -44,4 +44,4 @@ var options =
 /**
  * Start prototyper
  */
-prototyper.serve(options);
+prototyper.start(options);

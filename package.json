@@ -1,7 +1,7 @@
 {
     "name": "pro"
   , "description": "Accelerated prototype development with web technologies"
-  , "version": "0.1.0"
+  , "version": "0.2.0"
   , "author": "Eirikur Nilsson <eirikur@nilsson.is>"
   , "keywords": ["prototype", "framework", "express", "instant"]
   , "repository": "git://github.com/eirikurn/pro"
