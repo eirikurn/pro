@@ -1,5 +1,4 @@
 # Dependencies
-fs        = require 'fs'
 pathUtils = require 'path'
 utils     = require './utils'
 files     = require './files'
@@ -9,7 +8,7 @@ files     = require './files'
 ##
 class FileRegistry
 
-  constructor: (@source, @target) ->
+  constructor: (@source, @target, @fs) ->
     @files = []
     @filesBySource = {}
     @filesByTarget = {}
@@ -24,6 +23,8 @@ class FileRegistry
 
     utils.log "debug", "Found #{file.constructor.name} at #{path}"
 
+    @fs.watchFile file.path, file.onChange.bind(file)
+
     file.on 'change', =>
       file.build (err) ->
         utils.logError(err) if err
@@ -35,7 +36,7 @@ class FileRegistry
       @addFile(path, stats)
       cb()
 
-    utils.iterateFolder @source, exports.ignore, addFile, =>
+    @fs.traverse @source, exports.ignore, addFile, =>
       @findDependencies =>
         @buildOutdated cb
 
@@ -54,7 +55,7 @@ class FileRegistry
     # NodeJS still doesn't have a good cross-platform watchDirectory api.
     # So we check here if it has been added since the initial scan.
     # If it does exist, we'll need to initialize and build it.
-    fs.stat pathUtils.join(@source, path), (err, stats) =>
+    @fs.info pathUtils.join(@source, path), (err, stats) =>
       return cb(err) if err
       return cb() if stats.isDirectory()
 

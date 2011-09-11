@@ -1,14 +1,13 @@
 ##
 # Module dependencies
 ##
-fs = require 'fs'
 pathUtils = require 'path'
 {EventEmitter} = require 'events'
 
 utils = require '../utils'
 
 class File extends EventEmitter
-  constructor: (@path, @stats, @compiler, registry) ->
+  constructor: (@path, @stats, @compiler, @registry) ->
     @dependsOn = []
     @extension = utils.extname @path
     @private = utils.isPrivate @path
@@ -18,12 +17,9 @@ class File extends EventEmitter
       if @compiler.compilesTo
         @targetPath = utils.newext @targetPath, @compiler.compilesTo
 
-    fs.watchFile @path, (newStats, oldStats) => @onChange(newStats)
-
   onChange: (newStats) ->
-    if newStats.mtime > @stats.mtime
-      @stats = newStats
-      @emit 'change'
+    @stats = newStats
+    @emit 'change'
 
   onDependencyChange: =>
     @emit 'change'
@@ -50,7 +46,7 @@ class File extends EventEmitter
       return cb(err) if err
       @compile str, {}, (err, str) =>
         return cb(err) if err
-        utils.safeWriteFile @targetPath, str, "utf8", (err) ->
+        @registry.fs.writeFile @targetPath, str, "utf8", (err) ->
           cb(err)
 
   compile: (str, options, cb) ->
@@ -61,7 +57,7 @@ class File extends EventEmitter
       cb err
 
   read: (cb) ->
-    fs.readFile @path, "utf8", cb
+    @registry.fs.readFile @path, "utf8", cb
 
   isNewerThan: (time) ->
     return true if time > @stats.mtime
@@ -72,7 +68,7 @@ class File extends EventEmitter
   isOutdated: (cb) ->
     cb(new Error("Private files can't be outdated")) if @private
 
-    fs.stat @targetPath, (err, stats) =>
+    @registry.fs.info @targetPath, (err, stats) =>
       if err
         if err.code == "ENOENT"
           cb(null, true)

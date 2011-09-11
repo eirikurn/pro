@@ -14,7 +14,7 @@ exports.version = "0.2.0"
 exports.start = (options) ->
   utils.setLogLevel(options.logLevel)
 
-  registry = new FileRegistry(options.dir, options.output)
+  registry = new FileRegistry(options.dir, options.output, require('./filesystem'))
   registry.scan ->
     utils.log("info", "Finished scan")
 
