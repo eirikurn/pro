@@ -13,7 +13,7 @@ class File extends EventEmitter
     @private = utils.isPrivate @path
     @cleanPath = utils.cleanPath @path
     unless @private
-      @targetPath = pathUtils.join registry.target, path
+      @targetPath = pathUtils.join @registry.target, path
       if @compiler.compilesTo
         @targetPath = utils.newext @targetPath, @compiler.compilesTo
 
