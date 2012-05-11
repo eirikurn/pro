@@ -8,28 +8,28 @@ pathUtils = require 'path'
 utils = require '../utils'
 
 class File extends EventEmitter
+    
   constructor: (@path, @stats, @compiler, registry) ->
     @dependsOn = []
     @extension = utils.extname @path
     @private = utils.isPrivate @path
     @cleanPath = utils.cleanPath @path
+    @sourcePath = pathUtils.join registry.source, @path
+    @encoding = if 'encoding' of @compiler then @compiler.encoding else 'utf8'
     unless @private
-      @targetPath = pathUtils.join registry.target, path
+      @targetPath = pathUtils.join registry.target, @path
       if @compiler.compilesTo
         @targetPath = utils.newext @targetPath, @compiler.compilesTo
 
-    fs.watchFile @path, (newStats, oldStats) => @onChange(newStats)
-
-  onChange: (newStats) ->
-    if newStats.mtime > @stats.mtime
-      @stats = newStats
-      @emit 'change'
-
-  onDependencyChange: =>
-    @emit 'change'
+    fs.watch @sourcePath, (event) =>
+      fs.stat @sourcePath, (e, newStats) =>
+        @onChange(newStats) unless e
 
   findDependencies: (registry, cb) ->
     cb()
+
+  onDependencyChange: =>
+    @emit 'change'
 
   resetDependencies: ->
     for f in @dependsOn
@@ -50,7 +50,7 @@ class File extends EventEmitter
       return cb(err) if err
       @compile str, {}, (err, str) =>
         return cb(err) if err
-        utils.safeWriteFile @targetPath, str, "utf8", (err) ->
+        utils.safeWriteFile @targetPath, str, @encoding, (err) ->
           cb(err)
 
   compile: (str, options, cb) ->
@@ -61,13 +61,12 @@ class File extends EventEmitter
       cb err
 
   read: (cb) ->
-    fs.readFile @path, "utf8", cb
+    fs.readFile @sourcePath, @encoding, cb
 
-  isNewerThan: (time) ->
-    return true if time > @stats.mtime
-    for f in @dependsOn
-      return true if f.isNewerThan time
-    return false
+  onChange: (newStats) ->
+    if newStats.mtime > @stats.mtime
+      @stats = newStats
+      @emit 'change'
 
   isOutdated: (cb) ->
     cb(new Error("Private files can't be outdated")) if @private
@@ -82,6 +81,12 @@ class File extends EventEmitter
         cb(null, false)
       else
         cb(null, true)
+
+  isNewerThan: (time) ->
+    return true if time > @stats.mtime
+    for f in @dependsOn
+      return true if f.isNewerThan time
+    return false
 
 exports.File = File
 

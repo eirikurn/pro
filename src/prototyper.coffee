@@ -8,7 +8,7 @@ FileRegistry = require('./fileregistry')
 Server       = require('./server')
 
 # Package version
-exports.version = "0.2.0"
+exports.version = "0.3.0"
 
 # Main
 exports.start = (options) ->

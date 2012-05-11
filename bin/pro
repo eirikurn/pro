@@ -1,16 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Enable CoffeeScript
- */
-
-require('coffee-script')
-
-/**
  * Module dependencies.
  */
 
 var prototyper = require('../')
+  , pathUtils = require('path')
   , program = require('commander');
 
 /**
@@ -18,9 +13,9 @@ var prototyper = require('../')
  */
 program
   .version(prototyper.version)
-  .option('-d, --dir [dir]', 'Directory containing the prototype sources', process.cwd())
+  .option('-d, --dir [dir]', 'Directory containing the prototype sources', ".")
   .option('-l, --log [level]', 'Controls how verbose the logs will be, can be debug, info, warn and error', 'info')
-  .option('-o, --output [dir]', 'Output directory for static web content', process.cwd() + "/_build")
+  .option('-o, --output [dir]', 'Output directory for static web content', "_build")
   .parse(process.argv);
 
 // Host and port
@@ -36,9 +31,9 @@ if (~port.indexOf(':')) {
 var options =
   { host: host
   , port: port
-  , dir: program.dir
+  , dir: pathUtils.resolve(program.dir)
   , logLevel: program.log
-  , output: program.output
+  , output: pathUtils.resolve(program.output)
   };
 
 /**

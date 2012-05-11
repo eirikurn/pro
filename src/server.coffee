@@ -2,8 +2,9 @@
 # Module dependencies.
 ##
 express      = require 'express'
-utils        = require './utils'
+pathUtils    = require 'path'
 url          = require 'url'
+utils        = require './utils'
 
 class Server
   constructor: (options, @registry) ->
@@ -15,12 +16,13 @@ class Server
     app.use(express.directory(options.output, {icons: true}))
 
     app.listen(options.port, options.host)
-    utils.log("info", "Prototyper listening on port " + app.address().port)
+    utils.log("info", "Prototyper listening on port " + options.port)
 
   checkRegistry: (req, res, next) =>
     path = url.parse(req.url).pathname[1..]
     if path[path.length-1] == '/'
       path += "index.html"
+    path = pathUtils.normalize(path)
 
     @registry.lookupTarget path, (err, file) ->
       next(err)
