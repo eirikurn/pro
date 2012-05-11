@@ -78,12 +78,12 @@ class File extends EventEmitter
         else
           cb(err)
       else if @isNewerThan(stats.mtime)
-        cb(null, false)
-      else
         cb(null, true)
+      else
+        cb(null, false)
 
   isNewerThan: (time) ->
-    return true if time > @stats.mtime
+    return true if time < @stats.mtime
     for f in @dependsOn
       return true if f.isNewerThan time
     return false
