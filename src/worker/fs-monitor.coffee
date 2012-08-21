@@ -13,10 +13,16 @@ hooked = [
   "createReadStream"
 ]
 
-patchFunction = (name) ->
+ignored = [
+  "writeFile",
+  "writeFileSync"
+]
+
+patchFunction = (name, ignore = false) ->
   old = fs[name]
   fs[name] = (path, args...) ->
-    if fsLevel++ == 0 
+    if fsLevel++ == 0 and not ignore
+      # Check if the path matches the filter
       if not filter or minimatch(path, filter)
         accessed[path] = (accessed[path] or 0) + 1
     try
@@ -26,6 +32,9 @@ patchFunction = (name) ->
 
 for h in hooked
   patchFunction(h)
+
+for h in ignored
+  patchFunction(h, true)
 
 accessed = {}
 fsLevel = 0

@@ -85,3 +85,15 @@ describe 'fs-monitor', ->
       fs.createReadStream 'tmp/file'
       assert.deepEqual ['tmp/file'], monitor.getAccessed()
 
+  # BUG: Some write functions call read functions behind the scenes.
+  # Let's make sure they get ignored. Are there more?
+  describe 'should not log access from', ->
+    it 'fs.writeFile', (cb) ->
+      fs.writeFile 'tmp/file', 'test', ->
+        assert.deepEqual [], monitor.getAccessed()
+        cb()
+
+    it 'fs.writeFileSync', ->
+      fs.writeFileSync 'tmp/file', 'test'
+      assert.deepEqual [], monitor.getAccessed()
+
