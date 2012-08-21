@@ -19,6 +19,10 @@ exports.handleMessage = (m) ->
 
   currentJob = exports.jobs[m.job]
 
+  unless currentJob
+    console.log "Unknown job #{m.job}"
+    return
+
   currentJob m.data, (err, result) ->
     if err
       process.send { status: "error", error: {stack: err.stack, message: err.message, name: err.name} }

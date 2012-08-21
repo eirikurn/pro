@@ -51,4 +51,12 @@ describe 'slave.handleMessage', ->
     # Let the delayed job finish.
     clock.tick(51)
 
+  it 'should log unknown jobs', ->
+    log = sinon.stub console, 'log'
+    assert.doesNotThrow ->
+      slave.handleMessage job: 'unknown'
+
+    sinon.assert.called log
+    log.restore()
+
 
