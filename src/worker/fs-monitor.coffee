@@ -1,4 +1,5 @@
-fs = require('fs')
+fs        = require 'fs'
+minimatch = require 'minimatch'
 
 hooked = [
   "readFile",
@@ -15,8 +16,9 @@ hooked = [
 patchFunction = (name) ->
   old = fs[name]
   fs[name] = (path, args...) ->
-    if fsLevel++ == 0
-      accessed[path] = (accessed[path] or 0) + 1
+    if fsLevel++ == 0 
+      if not filter or minimatch(path, filter)
+        accessed[path] = (accessed[path] or 0) + 1
     try
       result = old(path, args...)
     finally
@@ -27,8 +29,12 @@ for h in hooked
 
 accessed = {}
 fsLevel = 0
+filter = null
 
 exports.clear = ->
   accessed = {}
+
+exports.setFilter = (f) ->
+  filter = f
 
 exports.getAccessed = -> Object.keys accessed

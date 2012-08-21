@@ -7,11 +7,9 @@ describe 'fs-monitor', ->
     try fs.mkdirSync 'tmp'
     try fs.writeFileSync 'tmp/file'
 
-
   after ->
     try fs.unlinkSync 'tmp/file'
     try fs.rmdirSync 'tmp'
-
 
   beforeEach ->
     monitor.clear()
@@ -27,6 +25,23 @@ describe 'fs-monitor', ->
     fs.readFileSync 'tmp/file'
     fs.readFileSync 'tmp/file'
     assert.deepEqual ['tmp/file'], monitor.getAccessed()
+
+
+  describe 'when filtered', ->
+    before ->
+      monitor.setFilter 'tmp/**'
+
+    after ->
+      monitor.setFilter null
+
+
+    it 'should log access to files that match filter', ->
+      fs.readFileSync 'tmp/file'
+      assert.deepEqual ['tmp/file'], monitor.getAccessed()
+
+    it 'should not log access to files that do not match filter', ->
+      try fs.readFileSync 'fake/file'
+      assert.deepEqual [], monitor.getAccessed()
 
 
   describe 'should log access from', ->
