@@ -15,16 +15,20 @@ hooked = [
 patchFunction = (name) ->
   old = fs[name]
   fs[name] = (path, args...) ->
-    accessed.append(path)
-    return old(path, args...)
+    if fsLevel++ == 0
+      accessed[path] = (accessed[path] or 0) + 1
+    try
+      result = old(path, args...)
+    finally
+      fsLevel--
 
 for h in hooked
   patchFunction(h)
 
-
-accessed = []
+accessed = {}
+fsLevel = 0
 
 exports.clear = ->
-  accessed.length = 0
+  accessed = {}
 
-exports.getAccessed = -> accessed
+exports.getAccessed = -> Object.keys accessed
