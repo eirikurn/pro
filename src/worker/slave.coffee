@@ -1,6 +1,5 @@
 # Needs to be imported first to override node's fs methods before other modules cache them.
 monitor = require './fs-monitor'
-compilers = require '../compilers'
 
 exports.jobs = require './jobs'
 

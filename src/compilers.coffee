@@ -1,5 +1,6 @@
 # Dependencies
 files     = require './files'
+utils     = require './utils'
 
 ##
 # Compiled file types.
@@ -10,7 +11,8 @@ files     = require './files'
 # * compile:      a function that receives source file contents and should call
 #                 its callback with the target file contents
 ##
-module.exports =
+compilers = module.exports =
+
   jade:
     compilesTo: 'html'
     supportsBody: true
@@ -53,3 +55,10 @@ module.exports =
     fileStrategy: files.File
     encoding: null
     compile: (str, options, cb) -> cb(null, str)
+
+  ##
+  # A utility function to get the compiler for the specified source file.
+  forFile: (file) ->
+    ext = utils.extname(file)
+    compiler = compilers[ext] or compilers.default
+    return compiler
