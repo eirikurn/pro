@@ -1,4 +1,4 @@
-Pro`{ffesional,ductive,totype}` development
+Pro`{fessional,ductive,totype}` development
 ===========================================
 
 ## What's Pro?
@@ -43,13 +43,13 @@ scripts/main.js
 scripts/jquery.js
 ```
 
-Prototyper doesn't care what language you prefer, or what folder
+Pro doesn't care what language you prefer, or what folder
 structure you want. It only cares that you get your prototypes
 up as quickly as possible.
 
 ## Install
 
-The easiest way to get started is to install prototyper globally
+The easiest way to get started is to install pro globally
 with npm.
 
 ```bash
