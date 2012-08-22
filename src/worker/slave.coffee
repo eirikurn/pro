@@ -1,6 +1,3 @@
-# Needs to be imported first to override node's fs methods before other modules cache them.
-monitor = require './fs-monitor'
-
 exports.jobs = require './jobs'
 
 currentJob = null
