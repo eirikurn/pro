@@ -1,19 +1,44 @@
-# Needs to be imported first to override node's fs methods before other modules cache them.
-monitor = require './fs-monitor'
-compilers = require '../compilers'
+child_process = require 'child_process'
+path          = require 'path'
 
-process.on 'message', (m) ->
-  if m.type != 'compile'
-    return
+WORKER_COUNT = process.env.NUM_WORKERS || require('os').cpus().length
 
-  file = fs.readSync(m.source)
-  compiler = compilers[path.extname(m.source)]
 
-  monitor.clear()
-  compiler.compile file, {}, (err, result) ->
-    fs.writeSync(m.target, result) unless err
-    msg = { result: err and 'error' or 'success', deps: monitor.getAccessed() }
-    msg.error = err if err
-    process.send(msg)
+class exports.WorkerQueue
+  constructor: (num_workers = WORKER_COUNT) ->
+    @queue       = []
+    @workers     = for i in [0...num_workers] then do =>
+      worker = child_process.fork(path.join(__dirname, 'slave'))
+      worker.on 'message', (msg) => @handleMessage(worker, msg)
+      worker
+    @freeWorkers = @workers[..]
+    @activeJobs = {}
+
+  queueJob: (jobName, data, cb) ->
+    @queue.push [jobName, data, cb]
+    @checkJobs()
+
+  checkJobs: ->
+    if @queue.length and @freeWorkers.length
+      job = @queue.shift()
+      worker = @freeWorkers.shift()
+      worker.send { job: job[0], data: job[1] }
+      @activeJobs[worker.pid] = job
+
+  handleMessage: (worker, msg) ->
+    job = @activeJobs[worker.pid]
+    cb = job[2]
+    if msg.status == 'error'
+      cb msg.error
+    else
+      cb null, msg.result
+
+    @freeWorkers.push worker
+    @checkJobs()
+
+
+
+
+
 
 
