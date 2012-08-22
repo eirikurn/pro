@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/eirikurn/pro.png?branch=redesign)](http://travis-ci.org/eirikurn/pro)
+
 Pro`{fessional,ductive,totype}` development
 ===========================================
 
