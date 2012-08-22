@@ -1,4 +1,7 @@
 test:
-	./node_modules/.bin/mocha --compilers coffee:coffee-script
+	./node_modules/.bin/mocha --compilers coffee:./node_modules/coffee-script
+
+build:
+	./node_modules/.bin/coffee -co lib src
 
 .PHONY: test

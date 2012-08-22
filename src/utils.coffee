@@ -30,11 +30,11 @@ exports.setLogLevel = (level) ->
 
 createFolders = exports.createFolders = (path, cb) ->
   parent = pathUtils.dirname path
-  _create = -> fs.mkdir path, 0755, (err) ->
+  _create = -> fs.mkdir path, 0o755, (err) ->
     err = null if err and err.code == "EEXIST"
     cb(err)
 
-  pathUtils.exists parent, (exists) ->
+  fs.exists parent, (exists) ->
     if exists
       _create()
     else
@@ -94,15 +94,15 @@ iterateFolder = exports.iterateFolder = (folder, ignoreList, cb, after, prefix =
     processFile 0
 
 # Regexp to detect private files
-private = /(^|[/\\])_/g
+privateRegexp = /(^|[/\\])_/g
 
 # Returns true if the file path has a part that starts with an underscore (_)
 exports.isPrivate = (path) ->
-  private.test path
+  privateRegexp.test path
 
 # Trims underscore from the start of all parts in the specified path.
 exports.cleanPath = (path) ->
-  path.replace private, "$1"
+  path.replace privateRegexp, "$1"
 
 forEach = exports.forEach = (arr, iter, cb) ->
   length = arr.length
