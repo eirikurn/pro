@@ -1,7 +1,8 @@
 fs        = require 'fs'
 
-compilers = require '../compilers'
+# Is imported first to override node's fs methods before compilers can cache them.
 monitor   = require './fs-monitor'
+compilers = require '../compilers'
 
 
 exports.compile = (job, cb) ->
