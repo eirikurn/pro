@@ -1,7 +1,6 @@
 # Dependencies
 fs        = require 'fs'
 pathUtils = require 'path'
-watch     = require 'watch'
 
 compilers = require './compilers'
 utils     = require './utils'
