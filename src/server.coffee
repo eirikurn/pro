@@ -11,7 +11,7 @@ class Server
     app = express.createServer()
     app.use(express.logger('dev'))
     app.use(express.favicon())
-    app.use(@checkRegistry)
+    # app.use(@checkRegistry)
     app.use(express.static(options.output))
     app.use(express.directory(options.output, {icons: true}))
 
