@@ -39,3 +39,7 @@ describe 'FileRegistry.addFile', ->
 
       assert.deepEqual(registry.dependencies["tmp/file.html"], ["tmp/file.jade", "tmp/_layout.jade"])
       cb()
+
+  it 'does something with errors'
+  
+  it 'does not build private files'
