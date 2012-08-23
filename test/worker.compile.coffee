@@ -34,15 +34,21 @@ describe 'jobs.compile', ->
     jobs.compile jobData, (err, result) ->
       sinon.assert.calledOnce compiler
       sinon.assert.calledWith compiler, "CONTENTS"
-      assert.deepEqual result, {dependencies: []}
       assert.equal fs.readFileSync('tmp/target'), "RESULT"
       cb()
 
-  it 'monitors accessed files', (cb) ->
+  it 'always records source file as dependency', (cb) ->
+    jobData = {source: 'tmp/source.test', target: 'tmp/target'}
+
+    jobs.compile jobData, (err, result) ->
+      assert.deepEqual {dependencies: ['tmp/source.test']}, result
+      cb()
+
+  it 'records access to other files', (cb) ->
     jobData = {source: 'tmp/source.test', target: 'tmp/target', options: {extraFile: 'tmp/extra'}}
 
     jobs.compile jobData, (err, result) ->
-      assert.deepEqual {dependencies: ['tmp/extra']}, result
+      assert.deepEqual {dependencies: ['tmp/source.test', 'tmp/extra']}, result
       cb()
 
   it 'forwards raised errors', (cb) ->

@@ -19,10 +19,9 @@ exports.compile = (job, cb) ->
   compiler = compilers.forFile(job.source)
   encoding = if 'encoding' of compiler then compiler.encoding else 'utf8'
 
-  file = fs.readFileSync(job.source, encoding)
-
   monitor.clear()
 
+  file = fs.readFileSync(job.source, encoding)
   compiler.compile file, job.options, (err, result) ->
     fs.writeFileSync(job.target, result, encoding) unless err
 
