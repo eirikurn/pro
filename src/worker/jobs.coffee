@@ -22,7 +22,10 @@ exports.compile = (job, cb) ->
   monitor.clear()
 
   file = fs.readFileSync(job.source, encoding)
-  compiler.compile file, job.options, (err, result) ->
-    fs.writeFileSync(job.target, result, encoding) unless err
+  try 
+    compiler.compile file, job.options, (err, result) ->
+      fs.writeFileSync(job.target, result, encoding) unless err
 
-    cb err, { dependencies: monitor.getAccessed() }
+      cb err, { dependencies: monitor.getAccessed() }
+  catch err
+    cb err
