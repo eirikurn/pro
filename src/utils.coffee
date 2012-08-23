@@ -23,7 +23,10 @@ exports.logError = (error, msg) ->
 
 
 logLevels = ['debug', 'info', 'warn', 'error']
-currentLevel = 1
+
+# Default level is INFO. Disable logging when running unit tests
+currentLevel = process.env.NODE_ENV == 'test' and 10 or 1
+
 exports.setLogLevel = (level) ->
   currentLevel = logLevels.indexOf level
   throw new Error("No log level named #{level}") if currentLevel == -1
