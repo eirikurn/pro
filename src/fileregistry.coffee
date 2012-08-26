@@ -17,9 +17,14 @@ class FileRegistry
 
 
   addFile: (path, stats, cb) ->
-    compiler = compilers.forFile(path)
+    if utils.isPrivate(path)
+      return cb()
 
+    # Full source file path
     sourcePath = pathUtils.join(@source, path)
+
+    # Full target file path
+    compiler = compilers.forFile(path)
     path = utils.newext(path, compiler.compilesTo) if compiler.compilesTo
     targetPath = pathUtils.join(@target, path)
 

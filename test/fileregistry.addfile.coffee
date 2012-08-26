@@ -51,4 +51,8 @@ describe 'FileRegistry.addFile', ->
       assert(e, "Didn't cause error")
       cb()
   
-  it 'does not build private files'
+
+  it 'does not compile private files', (cb) ->
+    registry.addFile "tmp/_private.jade", {}, (e) ->
+      sinon.assert.notCalled queueJob
+      cb()
