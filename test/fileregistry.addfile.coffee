@@ -8,8 +8,11 @@ worker        = require '../src/worker'
 describe 'FileRegistry.addFile', ->
   workerQueueStub = null
   registry = null
-  queueJob = sinon.spy (job, data, cb) ->
-    cb(null, { dependencies: ['tmp/file.jade', 'tmp/_layout.jade'] })
+  queueJob = sinon.stub().yields(null, { dependencies: [] })
+  queueJob.withArgs('compile', sinon.match(source: 'tmp/withLayout.jade'))
+          .yields(null, { dependencies: ['tmp/withLayout.jade', 'tmp/_layout.jade'] })
+  queueJob.withArgs('compile', sinon.match(source: 'tmp/fails.jade'))
+          .yields(new Error("Test error"))
   
   before ->
     workerQueueStub = sinon.stub worker, 'WorkerQueue', -> { queueJob: queueJob }
@@ -34,12 +37,18 @@ describe 'FileRegistry.addFile', ->
       sinon.assert.calledWith queueJob, "compile", sinon.match(expectedJob)
       cb()
 
-  it 'stores dependencies', (cb) ->
-    registry.addFile "tmp/file.jade", {}, (e) ->
 
-      assert.deepEqual(registry.dependencies["tmp/file.html"], ["tmp/file.jade", "tmp/_layout.jade"])
+  it 'stores dependencies', (cb) ->
+    registry.addFile "tmp/withLayout.jade", {}, (e) ->
+
+      assert.deepEqual(registry.dependencies["tmp/withLayout.html"], ["tmp/withLayout.jade", "tmp/_layout.jade"])
       cb()
 
-  it 'does something with errors'
+
+  it 'forwards compile errors', (cb) ->
+    registry.addFile "tmp/fails.jade", {}, (e) ->
+
+      assert(e, "Didn't cause error")
+      cb()
   
   it 'does not build private files'
