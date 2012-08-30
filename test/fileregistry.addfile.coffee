@@ -2,8 +2,7 @@ assert        = require 'assert'
 sinon         = require 'sinon'
 FileRegistry  = require '../src/fileregistry'
 worker        = require '../src/worker'
-
-
+utils         = require '../src/utils'
 
 describe 'FileRegistry.addFile', ->
   workerQueueStub = null
@@ -45,10 +44,14 @@ describe 'FileRegistry.addFile', ->
       cb()
 
 
-  it 'forwards compile errors', (cb) ->
-    registry.addFile "tmp/fails.jade", {}, (e) ->
+  it 'logs compile errors', (cb) ->
+    log = sinon.spy(utils, 'log')
 
-      assert(e, "Didn't cause error")
+    registry.addFile "tmp/fails.jade", {}, (e) ->
+      sinon.assert.called log
+      sinon.assert.calledWith log, 'error', sinon.match('Test error')
+      
+      log.restore()
       cb()
   
 

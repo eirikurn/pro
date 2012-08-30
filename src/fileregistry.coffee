@@ -36,7 +36,10 @@ class FileRegistry
 
     utils.log "info", "Building #{path}"
     @workers.queueJob "compile", job, (e, result) =>
-      @dependencies[path] = result.dependencies unless e
+      if e
+        utils.logError e
+      else
+        @dependencies[path] = result.dependencies
       cb(e)
 
 

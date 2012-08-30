@@ -18,7 +18,7 @@ exports.log = (level, msg...) ->
     console.log "[#{logLevels[levelNr].toUpperCase()}]", msg...
 
 exports.logError = (error, msg) ->
-  console.log "[#{logLevels[3].toUpperCase()}]", msg or error.toString()
+  exports.log('error', msg or error.toString())
   if msg then console.log error.toString()
 
 
