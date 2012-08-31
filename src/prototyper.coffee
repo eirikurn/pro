@@ -12,11 +12,9 @@ exports.version = "0.3.0"
 
 # Main
 exports.start = (options) ->
-  utils.setLogLevel(options.logLevel)
-
-  registry = new FileRegistry(options.dir, options.output)
+  registry = new FileRegistry()
   registry.scan ->
     utils.log("info", "Finished scan")
 
-  server = new Server(options, registry)
+  server = new Server(registry)
 

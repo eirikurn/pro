@@ -22,14 +22,10 @@ exports.logError = (error, msg) ->
   if msg then console.log error.toString()
 
 
-logLevels = ['debug', 'info', 'warn', 'error']
+logLevels = ['debug', 'info', 'warn', 'error', 'none']
 
 # Default level is INFO. Disable logging when running unit tests
-currentLevel = process.env.NODE_ENV == 'test' and 10 or 1
-
-exports.setLogLevel = (level) ->
-  currentLevel = logLevels.indexOf level
-  throw new Error("No log level named #{level}") if currentLevel == -1
+currentLevel = logLevels.indexOf(process.env.PRO_LOG_LEVEL || 'info')
 
 createFolders = exports.createFolders = (path, cb) ->
   parent = pathUtils.dirname path

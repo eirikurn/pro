@@ -28,15 +28,16 @@ if (~port.indexOf(':')) {
   port = port[1];
 }
 
-var options =
-  { host: host
-  , port: port
-  , dir: pathUtils.resolve(program.dir)
-  , logLevel: program.log
-  , output: pathUtils.resolve(program.output)
-  };
+/**
+ * Provide default env variables based on command line arguments.
+ */
+var env = process.env;
+env.PRO_SOURCE = env.PRO_SOURCE || pathUtils.resolve(program.dir);
+env.PRO_TARGET = env.PRO_TARGET || pathUtils.resolve(program.output);
+env.PRO_BASE_URL = env.PRO_BASE_URL || "http://" + host + ":" + port;
+env.PRO_LOG_LEVEL = env.PRO_LOG_LEVEL || program.log;
 
 /**
  * Start prototyper
  */
-prototyper.start(options);
+prototyper.start();

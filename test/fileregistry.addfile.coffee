@@ -15,6 +15,8 @@ describe 'FileRegistry.addFile', ->
   
   before ->
     workerQueueStub = sinon.stub worker, 'WorkerQueue', -> { queueJob: queueJob }
+    process.env.PRO_SOURCE = "."
+    process.env.PRO_TARGET = "_build"
 
   after ->
     workerQueueStub.restore()
