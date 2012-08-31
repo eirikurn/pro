@@ -1,8 +1,7 @@
 child_process = require 'child_process'
 path          = require 'path'
 
-WORKER_COUNT = process.env.NUM_WORKERS || require('os').cpus().length
-
+WORKER_COUNT = process.env.PRO_WORKERS || require('os').cpus().length
 
 class exports.WorkerQueue
   constructor: (num_workers = WORKER_COUNT) ->
