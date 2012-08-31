@@ -18,9 +18,10 @@ class Server
     server = url.parse(process.env.PRO_BASE_URL)
 
     if server.protocol == 'http:'
-      require('http').createServer(app).listen(server.port or 80, server.hostname)
+      app.listen(server.port or 80, server.hostname)
     else
-      require('https').createServer(app).listen(server.port or 443, server.hostname)
+      utils.log("error", "Pro server can not be run with SSL. Yet.")
+      process.exit()
 
     accessibleAt = server.protocol + "//localhost" + (server.port and ":#{server.port}") + "/"
     utils.log("info", "Prototyper server running on #{accessibleAt}")
