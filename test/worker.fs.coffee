@@ -44,6 +44,20 @@ describe 'fs-monitor', ->
       assert.deepEqual [], monitor.getAccessed()
 
 
+  describe 'with default filters', ->
+    it 'should not log access to hidden files', ->
+      try fs.readFileSync 'tmp/.hidden'
+      assert.deepEqual [], monitor.getAccessed()
+
+    it 'should not log access to files in hidden folders', ->
+      try fs.readFileSync 'tmp/.hidden/file'
+      assert.deepEqual [], monitor.getAccessed()
+
+    it 'should not log access to files in node_modules', ->
+      try fs.readFileSync './node_modules/module'
+      assert.deepEqual [], monitor.getAccessed()
+
+
   describe 'should log access from', ->
     it 'fs.readFile', (cb) ->
       fs.readFile 'tmp/file', ->
