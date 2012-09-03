@@ -16,13 +16,26 @@ class FileRegistry
     @workers = new worker.WorkerQueue()
     @source = process.env.PRO_SOURCE
     @target = process.env.PRO_TARGET
+    @shouldWatch = !process.env.PRO_JUST_BUILD
+
 
   addFile: (path, stats, cb) ->
-    if utils.isPrivate(path)
-      return cb()
+    # Track it
+    @sources[path] = stats
 
     # Full source file path
     sourcePath = pathUtils.join(@source, path)
+
+    # Track it
+    if @shouldWatch
+      utils.watchit sourcePath, (e) ->
+        return unless e == 'change'
+        fs.stat sourcePath, (e, stats) ->
+          @sources[path] = stats
+
+    # Nothing more if it is private
+    if utils.isPrivate(path)
+      return cb()
 
     # Full target file path
     compiler = compilers.forFile(path)

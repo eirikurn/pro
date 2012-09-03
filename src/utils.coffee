@@ -1,10 +1,15 @@
 ##
 # Module dependencies
 ##
-fs = require 'fs'
+fs        = require 'fs'
 pathUtils = require 'path'
 
 utils = exports
+
+##
+# Expose watchit here as a property so it can be stubbed.
+##
+exports.watchit = require 'watchit'
 
 ##
 # Logging
