@@ -4,4 +4,7 @@ test:
 build:
 	./node_modules/.bin/coffee -co lib src
 
+watch:
+	./node_modules/.bin/coffee -cwo lib src
+
 .PHONY: test
