@@ -16,6 +16,7 @@ class FileRegistry
     @workers = new worker.WorkerQueue()
     @source = process.env.PRO_SOURCE
     @target = process.env.PRO_TARGET
+    @sources = {}
     @shouldWatch = !process.env.PRO_JUST_BUILD
 
 
