@@ -7,11 +7,6 @@ pathUtils = require 'path'
 utils = exports
 
 ##
-# Expose watchit here as a property so it can be stubbed.
-##
-exports.watchit = require 'watchit'
-
-##
 # Logging
 ##
 exports.log = (level, msg...) ->

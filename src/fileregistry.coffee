@@ -1,6 +1,7 @@
 # Dependencies
 fs        = require 'fs'
 pathUtils = require 'path'
+watch     = require 'watch'
 
 compilers = require './compilers'
 utils     = require './utils'
@@ -17,6 +18,7 @@ class FileRegistry
     @source = process.env.PRO_SOURCE
     @target = process.env.PRO_TARGET
     @sources = {}
+    @targetDeps = {}
     @shouldWatch = !process.env.PRO_JUST_BUILD
 
 
@@ -58,8 +60,35 @@ class FileRegistry
       cb(e)
 
 
+  initialize: ->
+    for s, stat of @sources
+      target = @findTarget(s)
+      if target
+        if target not of @targetDeps or @targetDeps[target][0] != path
+          @targetDeps[target] = [path]
+
+    for t, deps of @targetDeps
+      do (t, deps) =>
+        fs.stat pathUtils.join(@target, t), (e, tStat) =>
+          tTime = tStat?.mtime
+
+
+  findTarget: (path) ->
+    return null if utils.isPrivate(path)
+    compiler = compilers.forFile(source)
+    path = utils.newext(path, compiler.compilesTo) if compiler.compilesTo
+    return path
+
+
   scan: (cb) ->
-    utils.iterateFolder @source, exports.ignore, @addFile.bind(this), cb
+    options =
+      ignoreDotFiles: true
+      filter: (f) -> true
+    watch.watchTree @source, options, (f, curr, prev) =>
+      unless curr
+        @sources = f
+        @initialize()
+    # utils.iterateFolder @source, exports.ignore, @addFile.bind(this), cb
 
 
 exports = module.exports = FileRegistry
